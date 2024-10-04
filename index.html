@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Streamer and Downloader</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212; /* Dark background */
+      color: #ffffff; /* White text */
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background-color 0.3s, color 0.3s;
+      height: 100vh; /* Full height for loading */
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #98fb98; /* Lighter Green */
+      text-align: center;
+      transition: color 0.3s;
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      width: 100%;
+      max-width: 500px;
+      border: 1px solid #98fb98; /* Lighter Green Border */
+      border-radius: 5px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      background-color: #222; /* Darker Input Background */
+      color: #ffffff; /* White Input Text */
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #7fff7f; /* Lighter Green */
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #98fb98; /* Lighter Green Background */
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 10px; /* Add margin for spacing */
+    }
+
+    button:hover {
+      background-color: #7fff7f; /* Even Lighter Green */
+      transform: translateY(-2px);
+    }
+
+    #videoContainer {
+      margin-top: 20px;
+      display: none;
+      border: 1px solid #444; /* Dark Border */
+      border-radius: 5px;
+      padding: 10px;
+      background-color: #222; /* Darker Video Background */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 360px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .error {
+      color: red;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .loader {
+      display: none;
+      border: 5px solid transparent; /* Transparent border */
+      border-top: 5px solid #98fb98; /* Lighter Green */
+      border-radius: 50%;
+      width: 50px; /* Larger size for better visibility */
+      height: 50px;
+      animation: spin 1s linear infinite;
+      position: absolute; /* Center loader */
+    }
+
+    .loading-container {
+      position: fixed; /* Fixed position to overlay on the screen */
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(18, 18, 18, 0.8); /* Semi-transparent background */
+      color: #98fb98; /* Lighter Green Text */
+      z-index: 10; /* Above other content */
+      transition: opacity 0.3s; /* Smooth opacity transition */
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 24px;
+      }
+      input[type="text"],
+      button {
+        font-size: 14px;
+      }
+      iframe {
+        height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Enter Terabox Video URL</h1>
+
+  <input type="text" id="videoUrl" placeholder="Enter Terabox video URL" />
+  <button id="loadButton">Load Video</button>
+  <button id="downloadButton">Download Video</button>
+
+  <div class="loading-container" id="loadingContainer" style="display: none;">
+    <div class="loader" id="loader"></div>
+    <p>Loading, please wait...</p> <!-- Loading message -->
+  </div>
+
+  <div id="videoContainer">
+    <iframe id="videoFrame" src="" allowfullscreen></iframe>
+  </div>
+  <div id="errorMessage" class="error"></div>
+
+  <script>
+    document.getElementById('loadButton').onclick = loadVideo;
+    document.getElementById('downloadButton').onclick = downloadVideo;
+
+    function loadVideo() {
+      const videoUrlInput = document.getElementById('videoUrl').value;
+      const videoContainer = document.getElementById('videoContainer');
+      const videoFrame = document.getElementById('videoFrame');
+      const errorMessage = document.getElementById('errorMessage');
+      const loadingContainer = document.getElementById('loadingContainer');
+
+      // Clear previous messages
+      errorMessage.innerText = '';
+      videoFrame.src = ''; // Clear previous video source
+      videoContainer.style.display = 'none';
+      loadingContainer.style.display = 'none';
+
+      // Validate URL format
+      const urlPattern = /https:\/\/1024terabox\.com\/s\/([a-zA-Z0-9]+)/;
+      const match = videoUrlInput.match(urlPattern);
+
+      if (!match) {
+        errorMessage.innerText = 'Please enter a valid Terabox video URL';
+        return;
+      }
+
+      const videoId = match[1]; // Extract the video ID from the URL
+      const videoSourceUrl = `https://www.forn.fun/play.html?url=https://1024terabox.com/s/${videoId}`;
+
+      // Show the loading spinner
+      loadingContainer.style.display = 'flex'; // Show loading container
+
+      // Set the iframe source to load the video
+      videoFrame.src = videoSourceUrl;
+
+      // Wait for the video to load
+      videoFrame.onload = function() {
+        loadingContainer.style.display = 'none'; // Hide loader after loading video
+        videoContainer.style.display = 'block'; // Show the video container
+      };
+
+      // Handle iframe load error
+      videoFrame.onerror = function() {
+        loadingContainer.style.display = 'none'; // Hide loader
+        errorMessage.innerText = 'Failed to load the video. Please check the URL or try again.';
+      };
+    }
+
+    function downloadVideo() {
+      const videoUrlInput = document.getElementById('videoUrl').value;
+
+      // Validate URL format
+      const urlPattern = /https:\/\/1024terabox\.com\/s\/([a-zA-Z0-9]+)/;
+      const match = videoUrlInput.match(urlPattern);
+
+      if (!match) {
+        alert('Please enter a valid Terabox video URL');
+        return;
+      }
+
+      const videoId = match[1]; // Extract the video ID from the URL
+      const downloadUrl = `https://apis.forn.fun/tera/data.php?id=${videoId}`;
+
+      // Redirect to download URL
+      window.location.href = downloadUrl;
+    }
+  </script>
+</body>
+</html>
